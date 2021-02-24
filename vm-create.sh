@@ -60,8 +60,10 @@ VM_CPU=2
 # VM graphics attached, possible values: vnc, spice or none
 # (see 'man virt-install')
 VM_GRAPHICS=none
+# VM DNS domain
+VM_NS_DOMAIN=local
 # FQDN of VM host (local TLD by default)
-VM_FQDN="$VM_NAME_LC.local"
+VM_FQDN="$VM_NAME_LC.$VM_NS_DOMAIN"
 # Use command 'osinfo-query os' to get available variants
 OS_VARIANT='ubuntu20.04'
 # Network adapter of the VM to use
@@ -128,7 +130,7 @@ ethernets:
 #     gateway4: 192.168.122.1
 #     nameservers:
 #       addresses: [ 192.168.122.1,8.8.8.8 ]
-#       search: [ local ]
+#       search: [ $VM_NS_DOMAIN ]
 HEREDOC
 
 # Create disk image from cloud config and remove temporary files
