@@ -26,7 +26,8 @@ if [[ $# -lt 2 ]]; then
         VMSize    - (Optional) Size for root partition of the new VM created,
                     accepted suffixes are:
                     K/M/G/T for kibibytes/mibibytes/gibibytes/tibibytes
-                    (size sholud greater or equal to original cloud image size)
+                    (size sholud greater than original cloud image root
+                    partition size)
 
     Other settings:
       * See 'Settings' section of this script
