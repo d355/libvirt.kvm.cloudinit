@@ -56,8 +56,8 @@ VM_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".qcow2
 VM_IMG_CD="$(pwd)"/"$VM_NAME_LC".qcow2
 VM_CC_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".cloudinit.iso
 CMD_CREATE_IMG_BACKING="qemu-img create -f qcow2 -F qcow2 -b "$BASE_IMG" "$VM_IMG""
-CMD_CREATE_IMG_CLONE="cp -f "$BASE_IMG" "$VM_NAME_LC".qcow2"
-CMD_CREATE_IMG_CLONE_RESIZED="cp -f "$BASE_IMG" "$VM_NAME_LC".qcow2 ; resize "$VM_NAME_LC".qcow2 "
+CMD_CREATE_IMG_CLONE="cp -f "$BASE_IMG" "$VM_IMG_CD""
+CMD_IMG_RESIZE="qemu-img resize "$VM_IMG_CD" "
 
 ## Settings
 # Base image handling. Possible values:
@@ -95,10 +95,9 @@ case $USE_BACKING_IMAGE in
     ;;
   no|false|0)
     VM_IMG=$VM_IMG_CD
+    $CMD_CREATE_IMG_CLONE
     if [[ $# -gt 2 ]]; then
-      $CMD_CREATE_IMG_CLONE_RESIZED "$3"
-    else
-      $CMD_CREATE_IMG_CLONE
+      $CMD_IMG_RESIZE "$3"
     fi
     ;;
 esac
