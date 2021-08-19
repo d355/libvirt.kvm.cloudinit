@@ -33,6 +33,9 @@ if [[ $# -lt 2 ]]; then
       * See 'Settings' section of this script
       * Contents of '~/.ssh/id_rsa.pub' file will be added to VM as trusted
         SSH public key (see 'Settings')
+      * If backing file is selected (see USE_BACKING_IMAGE setting) VM image
+        will be placed to the same directory as BaseImage,
+        otherwise - to the current working directory
 
     Notes:
       * VM name is expected to do not contain any separator characters
@@ -46,14 +49,14 @@ fi
 
 # Define vars
 VM_NAME="$1"
-# Lowercase 
+# Lowercase
 VM_NAME_LC="${VM_NAME,,}"
 BASE_IMG="$2"
 VM_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".qcow2
 VM_CC_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".cloudinit.iso
 CMD_CREATE_IMG_BACKING="qemu-img create -f qcow2 -F qcow2 -b "$BASE_IMG" "$VM_IMG""
-CMD_CREATE_IMG_CLONE="cp -f "$BASE_IMG" "$VM_IMG""
-CMD_CREATE_IMG_CLONE_RESIZED="cp -f "$BASE_IMG" "$VM_IMG" ; resize "VM_IMG" "
+CMD_CREATE_IMG_CLONE="cp -f "$BASE_IMG" "$VM_NAME_LC".qcow2"
+CMD_CREATE_IMG_CLONE_RESIZED="cp -f "$BASE_IMG" "$VM_NAME_LC".qcow2 ; resize "$VM_NAME_LC".qcow2 "
 
 ## Settings
 # Base image handling. Possible values:
@@ -81,7 +84,7 @@ SSH_PUBKEY="$([ -f ~/.ssh/id_rsa.pub ] && cat ~/.ssh/id_rsa.pub)"
 TEMP_DIR='.'
 
 # Create image
-case USE_BACKING_IMAGE in
+case $USE_BACKING_IMAGE in
   1)
     if [[ $# -gt 2 ]]; then
       $CMD_CREATE_IMG "$3"
