@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# The script creates VM using specified cloud image as backing file
+# The script creates VM using specified cloud image as base file
 #   See usage below.
 #
 #   Refs:
@@ -18,15 +18,15 @@ if [[ $# -lt 2 ]]; then
   echo "[!] Parameters required
 
 [i] Usage:
-      $0 VMName BackImage [VMSize]
+      $0 VMName BaseImage [VMSize]
       Parameters:
         VMName    - Name for the new VM created
                     (also used as base for VM image naming)
-        BackImage - Backing cloud image file pathname
+        BaseImage - Base cloud image file pathname
         VMSize    - (Optional) Size for root partition of the new VM created,
                     accepted suffixes are:
                     K/M/G/T for kibibytes/mibibytes/gibibytes/tibibytes
-                    (size sholud greater than original cloud image root
+                    (size should greater than original cloud image root
                     partition size)
 
     Other settings:
@@ -37,7 +37,7 @@ if [[ $# -lt 2 ]]; then
     Notes:
       * VM name is expected to do not contain any separator characters
         (spaces, etc.)
-      * New VM image will be placed to the same directory as backing one
+      * New VM image will be placed to the same directory as base one
       * Several temporary files will created at the current directory,
         write permission required (see 'Settings')
 "
@@ -48,12 +48,18 @@ fi
 VM_NAME="$1"
 # Lowercase 
 VM_NAME_LC="${VM_NAME,,}"
-BACK_IMG="$2"
-VM_IMG="$(dirname "$BACK_IMG")"/"$VM_NAME_LC".qcow2
-VM_CC_IMG="$(dirname "$BACK_IMG")"/"$VM_NAME_LC".cloudinit.iso
-CMD_CREATE_IMG="qemu-img create -f qcow2 -F qcow2 -b "$BACK_IMG" "$VM_IMG""
+BASE_IMG="$2"
+VM_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".qcow2
+VM_CC_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".cloudinit.iso
+CMD_CREATE_IMG_BACKING="qemu-img create -f qcow2 -F qcow2 -b "$BASE_IMG" "$VM_IMG""
+CMD_CREATE_IMG_CLONE="cp -f "$BASE_IMG" "$VM_IMG""
+CMD_CREATE_IMG_CLONE_RESIZED="cp -f "$BASE_IMG" "$VM_IMG" ; resize "VM_IMG" "
 
 ## Settings
+# Base image handling. Possible values:
+#   1 - (Default) Use base image as backing image for VM image (create dependent clone)
+#   0 - Use copy of base image for VM image (create clone)
+USE_BACKING_IMAGE=1
 # VM RAM size (MB)
 VM_RAM=1024
 # VM CPU cores count
@@ -74,12 +80,23 @@ SSH_PUBKEY="$([ -f ~/.ssh/id_rsa.pub ] && cat ~/.ssh/id_rsa.pub)"
 # Temporary files directory
 TEMP_DIR='.'
 
-# Create image with backing image (dependent clone)
-if [[ $# -gt 2 ]]; then
-  $CMD_CREATE_IMG "$3"
-else
-  $CMD_CREATE_IMG
-fi
+# Create image
+case USE_BACKING_IMAGE in
+  1)
+    if [[ $# -gt 2 ]]; then
+      $CMD_CREATE_IMG "$3"
+    else
+      $CMD_CREATE_IMG
+    fi
+    ;;
+  0)
+    if [[ $# -gt 2 ]]; then
+      $CMD_CREATE_IMG_CLONE_RESIZED "$3"
+    else
+      $CMD_CREATE_IMG_CLONE
+    fi
+    ;;
+esac
 chown :kvm "$VM_IMG"
 
 # Create meta-data cloud config
