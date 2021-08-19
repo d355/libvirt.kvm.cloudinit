@@ -53,6 +53,7 @@ VM_NAME="$1"
 VM_NAME_LC="${VM_NAME,,}"
 BASE_IMG="$2"
 VM_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".qcow2
+VM_IMG_CD="$(pwd)"/"$VM_NAME_LC".qcow2
 VM_CC_IMG="$(dirname "$BASE_IMG")"/"$VM_NAME_LC".cloudinit.iso
 CMD_CREATE_IMG_BACKING="qemu-img create -f qcow2 -F qcow2 -b "$BASE_IMG" "$VM_IMG""
 CMD_CREATE_IMG_CLONE="cp -f "$BASE_IMG" "$VM_NAME_LC".qcow2"
@@ -60,9 +61,9 @@ CMD_CREATE_IMG_CLONE_RESIZED="cp -f "$BASE_IMG" "$VM_NAME_LC".qcow2 ; resize "$V
 
 ## Settings
 # Base image handling. Possible values:
-#   1 - (Default) Use base image as backing image for VM image (create dependent clone)
-#   0 - Use copy of base image for VM image (create clone)
-USE_BACKING_IMAGE=1
+#   yes - (Default) Use base image as backing image for VM image (create dependent clone)
+#   no  - Use copy of base image for VM image (create clone)
+USE_BACKING_IMAGE=yes
 # VM RAM size (MB)
 VM_RAM=1024
 # VM CPU cores count
@@ -85,14 +86,15 @@ TEMP_DIR='.'
 
 # Create image
 case $USE_BACKING_IMAGE in
-  1)
+  yes|true|1)
     if [[ $# -gt 2 ]]; then
-      $CMD_CREATE_IMG "$3"
+      $CMD_CREATE_IMG_BACKING "$3"
     else
-      $CMD_CREATE_IMG
+      $CMD_CREATE_IMG_BACKING
     fi
     ;;
-  0)
+  no|false|0)
+    VM_IMG=$VM_IMG_CD
     if [[ $# -gt 2 ]]; then
       $CMD_CREATE_IMG_CLONE_RESIZED "$3"
     else
